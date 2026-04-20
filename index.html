@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>馬卡龍樂高 - 動態音效實驗室</title>
+    <title>馬卡龍樂高 - 完美比例修復版</title>
     <link rel="icon" href="favicon.png" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -21,55 +21,112 @@
             --inner-box-bg: #1a1c23 !important;
         }
         .app-background { background-color: var(--bg-color); color: var(--text-color); min-height: 100vh; width: 100vw; }
-        .lego-panel { background: var(--panel-bg); backdrop-filter: blur(12px); border: 5px solid rgba(255, 255, 255, 0.3); border-radius: var(--lego-radius); box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .widget-card { background-color: var(--card-bg) !important; border-radius: 1.5rem; padding: 1.25rem; position: relative; box-shadow: 6px 6px 0px rgba(0,0,0,0.05); }
+        
+        /* 💡 面板樣式 */
+        .lego-panel { 
+            background: var(--panel-bg); 
+            backdrop-filter: blur(12px); 
+            border: 5px solid rgba(255, 255, 255, 0.4); 
+            border-radius: var(--lego-radius); 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+        }
+
+        /* 💡 導航按鈕樣式 - 增加邊框寬度並確保不會重疊 */
+        .nav-lego-btn { 
+            background-color: var(--card-bg) !important; 
+            border-radius: 1.5rem; 
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.05); 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 3px solid transparent; /* 加粗邊框預留位置 */
+            margin-top: 10px; /* 給予按鈕向上彈跳的空間 */
+            display: flex;
+            align-items: center;
+        }
+
+        /* 選中狀態 */
+        .nav-lego-btn.active {
+            transform: translateY(-8px); /* 向上彈跳多一點 */
+            box-shadow: 0 15px 25px rgba(0,0,0,0.1);
+            border: 3px solid var(--active-color) !important; /* 明確顯示框線 */
+        }
+
+        .widget-card { 
+            background-color: var(--card-bg) !important; 
+            border-radius: 1.5rem; 
+            padding: 1.25rem; 
+            position: relative; 
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.05); 
+            border: 2px solid transparent;
+        }
+
         .inner-box { background-color: var(--inner-box-bg); border-radius: 1rem; transition: background-color 0.4s; }
-        .lego-btn { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-bottom: 4px solid rgba(0,0,0,0.1); cursor: pointer; }
-        .lego-btn:active { transform: translateY(2px) scale(0.95); border-bottom-width: 1px; }
-        @media (min-width: 1280px) { .w-double-xl { grid-column: span 2 / span 2; } }
-        /* 動畫效果 */
+        
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 10px var(--accent-color)); }
+        }
+        .car-animate { animation: breathe 3s infinite ease-in-out; display: inline-block; }
+
+        .lego-btn { transition: all 0.2s; border-bottom: 4px solid rgba(0,0,0,0.1); cursor: pointer; }
+        .lego-btn:active { transform: translateY(2px); border-bottom-width: 1px; }
+        
         .list-move, .list-enter-active, .list-leave-active { transition: all 0.5s ease; }
         .list-enter-from, .list-leave-to { opacity: 0; transform: translateY(30px); }
+
+        /* 隱藏滾動條但保持功能 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="m-0 p-0">
     <div id="app">
         <div class="app-container app-background p-3 md:p-6" :class="{ 'is-dark-mode': isDark }" :style="!isDark ? { '--bg-color': currentProfile.bgColor } : {}">
             
-            <header class="max-w-[1600px] mx-auto mb-6 flex flex-col lg:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-3 w-full lg:w-auto">
+            <header class="max-w-[1600px] mx-auto mb-8 flex flex-col xl:flex-row justify-between items-center gap-8 py-4">
+                
+                <div class="flex items-center gap-4 w-full xl:w-auto">
                     <div class="lego-panel px-6 py-4 flex items-center gap-4 flex-1">
-                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-lg" :style="{ background: currentProfile.gradient, color: 'white' }">
+                        <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-lg car-animate" 
+                             :style="{ background: currentProfile.gradient, color: 'white', '--accent-color': currentProfile.accentColor }">
                             {{ currentProfile.icon }}
                         </div>
                         <div>
                             <h1 class="text-xl font-bold">{{ currentProfile.name }}</h1>
-                            <p class="text-[10px] font-bold opacity-50 uppercase tracking-widest">Lego Smart OS v2.0</p>
+                            <div class="flex items-center gap-2 font-bold text-[10px] text-green-500">
+                                <span class="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
+                                <span class="opacity-70 uppercase tracking-widest">Client Online</span>
+                            </div>
                         </div>
                     </div>
-                    <button @click="toggleMode" class="lego-panel w-16 h-16 flex items-center justify-center text-3xl hover:rotate-12 transition-transform active:scale-90">
+                    <button @click="toggleMode" class="lego-panel w-16 h-16 flex items-center justify-center text-3xl hover:scale-110 transition-transform active:scale-95">
                         {{ isDark ? '☀️' : '🌙' }}
                     </button>
                 </div>
-                <nav class="flex gap-2 p-1.5 bg-white/20 rounded-full border border-white/30 backdrop-blur-md overflow-x-auto">
+
+                <nav class="flex gap-4 w-full xl:w-auto overflow-x-auto no-scrollbar p-2">
                     <button v-for="(p, key) in profiles" :key="key" @click="changeTenant(key)"
-                        class="px-5 py-2 rounded-full font-bold text-xs transition-all flex-shrink-0"
-                        :style="activeTenant === key ? { background: p.accentColor, color: 'white' } : { color: isDark ? '#cbd5e1' : '#64748b' }">
-                        {{ p.icon }} {{ p.shortName }}
+                        class="nav-lego-btn flex items-center gap-4 px-6 py-4 min-w-[150px] flex-shrink-0"
+                        :class="{ 'active': activeTenant === key }"
+                        :style="{ '--active-color': p.accentColor }">
+                        <span class="text-3xl">{{ p.icon }}</span>
+                        <div class="text-left">
+                            <div class="text-sm font-bold tracking-tight" :class="activeTenant === key ? 'opacity-100' : 'opacity-40'">{{ p.shortName }}</div>
+                            <div v-if="activeTenant === key" class="text-[9px] font-black uppercase" :style="{ color: p.accentColor }">Selected</div>
+                        </div>
                     </button>
                 </nav>
             </header>
 
             <main class="max-w-[1600px] mx-auto grid grid-cols-12 gap-6">
                 <aside class="col-span-12 lg:col-span-3">
-                    <div class="lego-panel p-5 sticky top-6">
-                        <h2 class="text-[10px] font-black opacity-40 uppercase tracking-widest mb-4">積木組件</h2>
+                    <div class="lego-panel p-6 sticky top-6">
+                        <h2 class="text-[10px] font-black opacity-40 uppercase tracking-widest mb-4">零件庫</h2>
                         <div class="grid grid-cols-2 gap-3">
                             <button v-for="w in availableWidgets" :key="w.id" @click="addWidget(w)"
                                 class="lego-btn flex flex-col items-center p-4 rounded-2xl"
                                 :style="!isDark ? { backgroundColor: currentProfile.itemBg } : { backgroundColor: '#374151' }">
                                 <span class="text-3xl mb-1">{{ w.icon }}</span>
-                                <span class="text-[9px] font-black opacity-60">{{ w.label }}</span>
+                                <span class="text-[10px] font-bold opacity-60">{{ w.label }}</span>
                             </button>
                         </div>
                     </div>
@@ -80,10 +137,15 @@
                         <transition-group name="list" tag="div" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 auto-rows-max">
                             <div v-for="(item, index) in dashboardWidgets" :key="item.instanceId" 
                                  class="widget-card p-5 transition-all" :class="{ 'w-double-xl': item.id === 'map' }">
-                                <button @click="removeWidget(index)" class="absolute -top-2 -right-2 w-8 h-8 bg-white dark:bg-slate-700 shadow-xl rounded-full text-red-400 flex items-center justify-center text-sm font-black z-20 hover:scale-110 active:scale-90 transition-transform">✕</button>
+                                <button @click="removeWidget(index)" class="absolute -top-3 -right-3 w-8 h-8 bg-white dark:bg-slate-800 shadow-xl rounded-full text-red-400 flex items-center justify-center text-sm font-black z-20 hover:rotate-90 transition-transform">✕</button>
                                 <component :is="item.type" :profile="currentProfile" :is-dark="isDark" :dynamic-speed="simulatedSpeed"></component>
                             </div>
                         </transition-group>
+                        
+                        <div v-if="dashboardWidgets.length === 0" class="flex flex-col items-center justify-center py-40 opacity-10 select-none">
+                            <div class="text-9xl mb-4 animate-bounce">🧱</div>
+                            <p class="font-black italic text-2xl tracking-widest">DRAG COMPONENTS HERE</p>
+                        </div>
                     </div>
                 </section>
             </main>
@@ -93,22 +155,14 @@
     <script>
         const { createApp, ref, computed, onMounted } = Vue;
 
-        /* --- 零件組件 (時速錶改為接收動態數據) --- */
-        const SpeedWidget = { 
-            props: ['profile', 'isDark', 'dynamicSpeed'], 
-            template: `<div class="text-center py-3">
-                <div class="text-5xl font-black italic tracking-tighter transition-all" :style="{color: isDark ? '#60a5fa' : profile.accentColor}">{{ dynamicSpeed }}</div>
-                <div class="text-[9px] font-bold opacity-30 mt-1 uppercase">Live KM / H</div>
-            </div>`
-        };
-
-        const MapWidget = { props: ['profile', 'isDark'], template: `<div class="h-full flex flex-col"><span class="text-[9px] font-black opacity-40 mb-2 uppercase">GPS</span><div class="flex-1 inner-box flex items-center justify-center text-4xl min-h-[120px]">🗺️</div></div>` };
-        const FuelWidget = { props: ['profile', 'isDark'], template: `<div><div class="flex justify-between text-[9px] font-black opacity-40 mb-2"><span>ENERGY</span><span>90%</span></div><div class="flex gap-1.5 h-10 items-end"><div v-for="i in 10" :key="i" class="flex-1 rounded-t-md shadow-sm" :style="{height: (i*10)+'%', background: i<=9 ? profile.accentColor : '#ddd'}"></div></div></div>` };
-        const MoneyWidget = { props: ['profile', 'isDark'], template: `<div><div class="text-[9px] font-black opacity-40 mb-1 uppercase">Revenue</div><div class="text-3xl font-black" :style="{color: isDark ? '#fbbf24' : '#334155'}">$ 2,450</div></div>` };
-        const WeatherWidget = { props: ['profile', 'isDark'], template: `<div class="flex justify-between items-center h-full"><div><div class="text-3xl font-black">18°C</div><div class="text-[9px] font-bold opacity-40">Taipei</div></div><div class="text-4xl">{{ isDark ? '🌙' : '🌤️' }}</div></div>` };
-        const DriverWidget = { props: ['profile', 'isDark'], template: `<div class="flex items-center gap-3"><div class="text-3xl inner-box p-2 rounded-full">👨‍✈️</div><div><div class="font-bold text-sm">老王</div><div class="text-[10px] font-bold text-green-400">駕駛中</div></div></div>` };
-        const AlertWidget = { props: ['profile', 'isDark'], template: `<div class="flex items-center gap-3"><div class="text-2xl">⚠️</div><div class="text-xs font-bold opacity-70">溫度正常</div></div>` };
-        const CargoWidget = { props: ['profile', 'isDark'], template: `<div><div class="text-[9px] font-black opacity-40 mb-2 uppercase">Load</div><div class="h-3 inner-box overflow-hidden p-0.5"><div class="h-full rounded-full transition-all" :style="{width: '60%', background: profile.accentColor}"></div></div></div>` };
+        const SpeedWidget = { props: ['profile', 'isDark', 'dynamicSpeed'], template: `<div class="text-center py-3"><div class="text-5xl font-black italic tracking-tighter" :style="{color: isDark ? '#60a5fa' : profile.accentColor}">{{ dynamicSpeed }}</div><div class="text-[10px] font-bold opacity-30 mt-1">KM / H</div></div>` };
+        const MapWidget = { props: ['profile', 'isDark'], template: `<div class="h-full flex flex-col"><span class="text-[9px] font-black opacity-40 mb-2 uppercase">GPS 動態導航</span><div class="flex-1 inner-box flex items-center justify-center text-5xl min-h-[140px]">🗺️</div></div>` };
+        const FuelWidget = { props: ['profile', 'isDark'], template: `<div><div class="flex justify-between text-[9px] font-black opacity-40 mb-2"><span>ENERGY儲備</span><span>92%</span></div><div class="flex gap-1.5 h-12 items-end"><div v-for="i in 10" :key="i" class="flex-1 rounded-t-lg shadow-sm" :style="{height: (i*10)+'%', background: i<=9 ? profile.accentColor : '#ddd'}"></div></div></div>` };
+        const MoneyWidget = { props: ['profile', 'isDark'], template: `<div><div class="text-[9px] font-black opacity-40 mb-1 uppercase">今日營收總計</div><div class="text-3xl font-black" :style="{color: isDark ? '#fbbf24' : '#334155'}">$ 3,680</div></div>` };
+        const WeatherWidget = { props: ['profile', 'isDark'], template: `<div class="flex justify-between items-center h-full"><div><div class="text-4xl font-black">24°C</div><div class="text-[10px] font-bold opacity-40">台北市區</div></div><div class="text-6xl">{{ isDark ? '🌙' : '🌈' }}</div></div>` };
+        const DriverWidget = { props: ['profile', 'isDark'], template: `<div class="flex items-center gap-4"><div class="text-4xl inner-box p-4 rounded-full">👨‍✈️</div><div><div class="font-bold text-lg">首席司機</div><div class="text-[10px] font-bold text-green-500 uppercase">狀況穩定</div></div></div>` };
+        const AlertWidget = { props: ['profile', 'isDark'], template: `<div class="flex items-center gap-3"><div class="text-3xl">🛡️</div><div class="text-xs font-bold opacity-70 leading-tight">安全防護系統<br>運行正常</div></div>` };
+        const CargoWidget = { props: ['profile', 'isDark'], template: `<div><div class="text-[9px] font-black opacity-40 mb-2 uppercase">當前載重率</div><div class="h-5 inner-box overflow-hidden p-1"><div class="h-full rounded-full transition-all" :style="{width: '65%', background: profile.accentColor}"></div></div></div>` };
 
         createApp({
             components: { MapWidget, SpeedWidget, FuelWidget, MoneyWidget, WeatherWidget, DriverWidget, AlertWidget, CargoWidget },
@@ -116,69 +170,49 @@
                 const isDark = ref(false);
                 const activeTenant = ref('truck');
                 const dashboardWidgets = ref([]);
-                const simulatedSpeed = ref(88);
+                const simulatedSpeed = ref(90);
 
-                // 🏗️ 1. 音效功能：使用瀏覽器內建 Oscillator 產生「喀嚓」聲（不用外部檔案）
-                const playClickSound = (type = 'click') => {
+                const playClickSound = (freq = 800) => {
                     const ctx = new (window.AudioContext || window.webkitAudioContext)();
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
-                    osc.type = type === 'click' ? 'square' : 'triangle';
-                    osc.frequency.setValueAtTime(type === 'click' ? 800 : 400, ctx.currentTime);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime);
                     gain.gain.setValueAtTime(0.1, ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.1);
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.start(); osc.stop(ctx.currentTime + 0.1);
                 };
 
-                // 🏗️ 2. 動態數據模擬：時速跳動
                 onMounted(() => {
                     setInterval(() => {
-                        const change = Math.floor(Math.random() * 5) - 2;
-                        simulatedSpeed.value = Math.max(80, Math.min(120, simulatedSpeed.value + change));
-                    }, 800);
+                        const change = Math.floor(Math.random() * 7) - 3;
+                        simulatedSpeed.value = Math.max(60, Math.min(140, simulatedSpeed.value + change));
+                    }, 1000);
                 });
 
                 const profiles = {
-                    truck: { name: '草莓貨運', icon: '🚚', shortName: '貨車', accentColor: '#ff9aa2', bgColor: '#fff5f5', itemBg: '#ffe4e6', gradient: 'linear-gradient(135deg, #ff9aa2 0%, #ffb7b2 100%)' },
-                    taxi: { name: '芒果車隊', icon: '🚕', shortName: '計程', accentColor: '#ffdac1', bgColor: '#fff9f2', itemBg: '#ffeddf', gradient: 'linear-gradient(135deg, #ffdac1 0%, #ffeddf 100%)' },
-                    ev: { name: '薄荷電力', icon: '🚙', shortName: '電車', accentColor: '#b5ead7', bgColor: '#f0fff4', itemBg: '#dcfce7', gradient: 'linear-gradient(135deg, #b5ead7 0%, #c7f9cc 100%)' }
+                    truck: { name: '草莓貨運', icon: '🚚', shortName: '貨車車隊', accentColor: '#ff9aa2', bgColor: '#fff5f5', itemBg: '#ffe4e6', gradient: 'linear-gradient(135deg, #ff9aa2 0%, #ffb7b2 100%)' },
+                    taxi: { name: '芒果車隊', icon: '🚕', shortName: '計程車隊', accentColor: '#ffdac1', bgColor: '#fff9f2', itemBg: '#ffeddf', gradient: 'linear-gradient(135deg, #ffdac1 0%, #ffeddf 100%)' },
+                    ev: { name: '薄荷電力', icon: '🚙', shortName: '電動車隊', accentColor: '#b5ead7', bgColor: '#f0fff4', itemBg: '#dcfce7', gradient: 'linear-gradient(135deg, #b5ead7 0%, #c7f9cc 100%)' }
                 };
 
                 const availableWidgets = [
-                    { id: 'map', type: 'MapWidget', label: '地圖', icon: '🗺️' },
-                    { id: 'speed', type: 'SpeedWidget', label: '時速', icon: '⚡' },
-                    { id: 'fuel', type: 'FuelWidget', label: '能源', icon: '🔋' },
-                    { id: 'money', type: 'MoneyWidget', label: '收益', icon: '💰' },
+                    { id: 'map', type: 'MapWidget', label: '動態地圖', icon: '🗺️' },
+                    { id: 'speed', type: 'SpeedWidget', label: '即時時速', icon: '⚡' },
+                    { id: 'fuel', type: 'FuelWidget', label: '能源計', icon: '🔋' },
+                    { id: 'money', type: 'MoneyWidget', label: '財務表', icon: '💰' },
                     { id: 'weather', type: 'WeatherWidget', label: '氣象', icon: '🌤️' },
-                    { id: 'driver', type: 'DriverWidget', label: '駕駛', icon: '👤' },
-                    { id: 'alert', type: 'AlertWidget', label: '警示', icon: '🔔' },
+                    { id: 'driver', type: 'DriverWidget', label: '司機', icon: '👤' },
+                    { id: 'alert', type: 'AlertWidget', label: '安全', icon: '🛡️' },
                     { id: 'cargo', type: 'CargoWidget', label: '載重', icon: '📦' }
                 ];
 
                 const currentProfile = computed(() => profiles[activeTenant.value]);
-                
-                const addWidget = (w) => {
-                    playClickSound('click');
-                    dashboardWidgets.value.push({ ...w, instanceId: Date.now() + Math.random() });
-                };
-                
-                const removeWidget = (idx) => {
-                    playClickSound('pop');
-                    dashboardWidgets.value.splice(idx, 1);
-                };
-
-                const changeTenant = (key) => {
-                    playClickSound('click');
-                    activeTenant.value = key;
-                };
-
-                const toggleMode = () => {
-                    playClickSound('click');
-                    isDark.value = !isDark.value;
-                };
+                const addWidget = (w) => { playClickSound(1000); dashboardWidgets.value.push({ ...w, instanceId: Date.now() + Math.random() }); };
+                const removeWidget = (idx) => { playClickSound(400); dashboardWidgets.value.splice(idx, 1); };
+                const changeTenant = (key) => { playClickSound(800); activeTenant.value = key; };
+                const toggleMode = () => { playClickSound(600); isDark.value = !isDark.value; };
 
                 return { isDark, activeTenant, profiles, currentProfile, availableWidgets, dashboardWidgets, simulatedSpeed, addWidget, removeWidget, changeTenant, toggleMode };
             }
