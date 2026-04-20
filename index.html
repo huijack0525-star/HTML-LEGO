@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>馬卡龍樂高 - 終極深色模式修復</title>
+    <link rel="icon" href="favicon.png" type="image/x-icon">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --lego-radius: 2rem; }
+
+        /* 💡 核心邏輯：所有顏色都定義成變數 */
+        .app-container {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --panel-bg: rgba(255, 255, 255, 0.85);
+            --text-color: #334155;
+            --inner-box-bg: #f1f5f9;
+            transition: all 0.5s ease;
+        }
+
+        /* 🌙 深色模式下，強制覆蓋所有變數值 */
+        .app-container.is-dark-mode {
+            --bg-color: #1a1c23 !important;
+            --card-bg: #2d303d !important;
+            --panel-bg: rgba(30, 41, 59, 0.8) !important;
+            --text-color: #f1f5f9 !important;
+            --inner-box-bg: #1a1c23 !important;
+        }
+
+        /* 將背景應用到全螢幕 */
+        .app-background {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            width: 100vw;
+            transition: background-color 0.5s ease;
+        }
+
+        /* 樂高主面板 */
+        .lego-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--lego-radius);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        /* 📦 儀表板零件卡片 */
+        .widget-card {
+            background-color: var(--card-bg) !important;
+            border-radius: 1.5rem;
+            padding: 1.25rem;
+            position: relative;
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.05);
+        }
+
+        .inner-box {
+            background-color: var(--inner-box-bg);
+            border-radius: 1rem;
+            transition: background-color 0.4s;
+        }
+
+        /* 零件櫃按鈕在深色模式下的樣子 */
+        .is-dark-mode .lego-btn {
+            background-color: #374151 !important;
+            border-bottom-color: #111827 !important;
+        }
+
+        /* RWD 調整 */
+        @media (min-width: 1280px) { .w-double-xl { grid-column: span 2 / span 2; } }
+        @media (max-width: 1023px) {
+            .toolbox-scroll { display: flex; overflow-x: auto; gap: 0.75rem; padding-bottom: 0.5rem; }
+            .toolbox-item { flex: 0 0 calc(33.333% - 0.5rem); }
+        }
+    </style>
+</head>
+<body class="m-0 p-0">
+    <div id="app">
+        <div class="app-container app-background p-3 md:p-6" 
+             :class="{ 'is-dark-mode': isDark }"
+             :style="!isDark ? { '--bg-color': currentProfile.bgColor } : {}">
+            
+            <header class="max-w-[1600px] mx-auto mb-6 flex flex-col lg:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3 w-full lg:w-auto">
+                    <div class="lego-panel px-6 py-4 flex items-center gap-4 flex-1">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-lg" :style="{ background: currentProfile.gradient, color: 'white' }">
+                            {{ currentProfile.icon }}
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold">{{ currentProfile.name }}</h1>
+                            <p class="text-[10px] font-bold opacity-50">{{ isDark ? '🌙 NIGHT VIEW' : '☀️ DAY VIEW' }}</p>
+                        </div>
+                    </div>
+                    
+                    <button @click="isDark = !isDark" 
+                        class="lego-panel w-16 h-16 flex items-center justify-center text-3xl hover:scale-105 active:scale-90 transition-transform">
+                        {{ isDark ? '☀️' : '🌙' }}
+                    </button>
+                </div>
+                
+                <nav class="flex gap-2 p-1.5 bg-white/20 rounded-full border border-white/30 backdrop-blur-md overflow-x-auto">
+                    <button v-for="(p, key) in profiles" :key="key" @click="activeTenant = key"
+                        class="px-5 py-2 rounded-full font-bold text-xs transition-all flex-shrink-0"
+                        :style="activeTenant === key ? { background: p.accentColor, color: 'white' } : { color: isDark ? '#cbd5e1' : '#64748b' }">
+                        {{ p.icon }} {{ p.shortName }}
+                    </button>
+                </nav>
+            </header>
+
+            <main class="max-w-[1600px] mx-auto grid grid-cols-12 gap-6">
+                <aside class="col-span-12 lg:col-span-3">
+                    <div class="lego-panel p-5 sticky top-6">
+                        <h2 class="text-[10px] font-black opacity-40 uppercase tracking-widest mb-4">零件箱</h2>
+                        <div class="toolbox-scroll grid grid-cols-2 lg:grid-cols-2 gap-3">
+                            <button v-for="w in availableWidgets" :key="w.id" @click="addWidget(w)"
+                                class="lego-btn toolbox-item flex flex-col items-center p-4 rounded-2xl transition-colors"
+                                :style="!isDark ? { backgroundColor: currentProfile.itemBg } : {}">
+                                <span class="text-3xl mb-1">{{ w.icon }}</span>
+                                <span class="text-[9px] font-black opacity-60">{{ w.label }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </aside>
+
+                <section class="col-span-12 lg:col-span-9">
+                    <div class="lego-panel p-6 min-h-[600px] bg-opacity-20">
+                        <transition-group name="list" tag="div" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 auto-rows-max">
+                            <div v-for="(item, index) in dashboardWidgets" :key="item.instanceId" 
+                                 class="widget-card p-5 transition-all" 
+                                 :class="{ 'w-double-xl': item.id === 'map' }">
+                                
+                                <button @click="removeWidget(index)" class="absolute -top-2 -right-2 w-8 h-8 bg-white dark:bg-slate-700 shadow-xl rounded-full text-red-400 flex items-center justify-center text-sm font-black z-20">✕</button>
+                                <component :is="item.type" :profile="currentProfile" :is-dark="isDark"></component>
+                            </div>
+                        </transition-group>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed } = Vue;
+
+        /* --- 零件組件 --- */
+        const MapWidget = { props: ['profile', 'isDark'], template: `<div class="h-full flex flex-col">
+            <span class="text-[9px] font-black opacity-40 mb-2 uppercase tracking-tighter">GPS Navigator</span>
+            <div class="flex-1 inner-box flex items-center justify-center text-4xl min-h-[120px]">🗺️</div>
+        </div>`};
+
+        const SpeedWidget = { props: ['profile', 'isDark'], template: `<div class="text-center py-3">
+            <div class="text-5xl font-black italic tracking-tighter" :style="{color: isDark ? '#60a5fa' : profile.accentColor}">88</div>
+            <div class="text-[9px] font-bold opacity-30 mt-1 uppercase">KM / H</div>
+        </div>`};
+
+        const FuelWidget = { props: ['profile', 'isDark'], template: `<div>
+            <div class="flex justify-between text-[9px] font-black opacity-40 mb-2"><span>ENERGY</span><span>90%</span></div>
+            <div class="flex gap-1.5 h-10 items-end">
+                <div v-for="i in 10" :key="i" class="flex-1 rounded-t-md shadow-sm" :style="{height: (i*10)+'%', background: i<=9 ? profile.accentColor : '#ddd'}"></div>
+            </div>
+        </div>`};
+
+        const MoneyWidget = { props: ['profile', 'isDark'], template: `<div>
+            <div class="text-[9px] font-black opacity-40 mb-1 uppercase">Revenue</div>
+            <div class="text-3xl font-black" :style="{color: isDark ? '#fbbf24' : '#334155'}">$ 2,450</div>
+        </div>`};
+
+        const WeatherWidget = { props: ['profile', 'isDark'], template: `<div class="flex justify-between items-center h-full">
+            <div><div class="text-3xl font-black">18°C</div><div class="text-[9px] font-bold opacity-40">Taipei</div></div>
+            <div class="text-4xl">{{ isDark ? '🌙' : '🌤️' }}</div>
+        </div>`};
+
+        const DriverWidget = { props: ['profile', 'isDark'], template: `<div class="flex items-center gap-3">
+            <div class="text-3xl inner-box p-2 rounded-full">👨‍✈️</div>
+            <div><div class="font-bold text-sm">老王</div><div class="text-[10px] font-bold text-green-400">駕駛中</div></div>
+        </div>`};
+
+        const AlertWidget = { props: ['profile', 'isDark'], template: `<div class="flex items-center gap-3">
+            <div class="text-2xl">⚠️</div>
+            <div class="text-xs font-bold opacity-70 leading-tight">引擎溫度偏高</div>
+        </div>`};
+
+        const CargoWidget = { props: ['profile', 'isDark'], template: `<div>
+            <div class="text-[9px] font-black opacity-40 mb-2 uppercase">Load</div>
+            <div class="h-3 inner-box overflow-hidden p-0.5">
+                <div class="h-full rounded-full transition-all" :style="{width: '60%', background: profile.accentColor}"></div>
+            </div>
+        </div>`};
+
+        createApp({
+            components: { MapWidget, SpeedWidget, FuelWidget, MoneyWidget, WeatherWidget, DriverWidget, AlertWidget, CargoWidget },
+            setup() {
+                const isDark = ref(false);
+                const activeTenant = ref('truck');
+                const dashboardWidgets = ref([]);
+                const profiles = {
+                    truck: { name: '草莓貨運', icon: '🚚', shortName: '貨車', accentColor: '#ff9aa2', bgColor: '#fff5f5', itemBg: '#ffe4e6', gradient: 'linear-gradient(135deg, #ff9aa2 0%, #ffb7b2 100%)' },
+                    taxi: { name: '芒果車隊', icon: '🚕', shortName: '計程', accentColor: '#ffdac1', bgColor: '#fff9f2', itemBg: '#ffeddf', gradient: 'linear-gradient(135deg, #ffdac1 0%, #ffeddf 100%)' },
+                    ev: { name: '薄荷電力', icon: '🚙', shortName: '電車', accentColor: '#b5ead7', bgColor: '#f0fff4', itemBg: '#dcfce7', gradient: 'linear-gradient(135deg, #b5ead7 0%, #c7f9cc 100%)' }
+                };
+
+                const availableWidgets = [
+                    { id: 'map', type: 'MapWidget', label: '地圖導航', icon: '🗺️' },
+                    { id: 'speed', type: 'SpeedWidget', label: '車速錶', icon: '⚡' },
+                    { id: 'fuel', type: 'FuelWidget', label: '能源計', icon: '🔋' },
+                    { id: 'money', type: 'MoneyWidget', label: '收益表', icon: '💰' },
+                    { id: 'weather', type: 'WeatherWidget', label: '氣象', icon: '🌤️' },
+                    { id: 'driver', type: 'DriverWidget', label: '駕駛', icon: '👤' },
+                    { id: 'alert', type: 'AlertWidget', label: '警示', icon: '🔔' },
+                    { id: 'cargo', type: 'CargoWidget', label: '載重儀', icon: '📦' }
+                ];
+                
+                const currentProfile = computed(() => profiles[activeTenant.value]);
+                const addWidget = (w) => { dashboardWidgets.value.push({ ...w, instanceId: Date.now() + Math.random() }); };
+                const removeWidget = (idx) => { dashboardWidgets.value.splice(idx, 1); };
+
+                return { isDark, activeTenant, profiles, currentProfile, availableWidgets, dashboardWidgets, addWidget, removeWidget };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
